@@ -3,134 +3,76 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using DevExpress.XtraCharts;
 
-namespace ChartLineColor
-{
-    public partial class Form1 : Form
-    {
+namespace ChartLineColor {
+    public partial class Form1 : Form {
         double level = 0;
-        
-        public Form1()
-        {
+        double maxPointValue = 0;
+        double minPointValue = 0;
+        public Form1() {
             InitializeComponent();
         }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-            PopulateData();
+        private void Form1_Load(object sender, EventArgs e) {
+            chartControl1.BoundDataChanged += OnBoundDataChanged;
+            InitializeSeries();
+            ApplyColorizer();
         }
-
-        private void PopulateData()
-        {
-            SeriesMaker sm = new SeriesMaker(Convert.ToDouble(textBox1.Text));
-
-            chartControl1.DataSource = sm.Data;
-            chartControl1.SeriesDataMember = "S";
-            chartControl1.SeriesTemplate.View = new StepLineSeriesView();
-            chartControl1.SeriesTemplate.LabelsVisibility = DevExpress.Utils.DefaultBoolean.True;
-            chartControl1.SeriesTemplate.Label.TextPattern = "{V:N2}";
-            chartControl1.SeriesTemplate.ArgumentDataMember = "X";
-            chartControl1.SeriesTemplate.ValueDataMembers.AddRange(new string[] { "Y" });
+        public void InitializeSeries() {      
+            chartControl1.Series.Clear();
+           
+            Series series = new Series();
+            series.BindToData(PointGenerator.Generate(), "X", "Y");
+            series.ColorDataMember = "Y";
+            chartControl1.Series.Add(series);
+            series.LabelsVisibility = DevExpress.Utils.DefaultBoolean.True;
+            series.Label.TextPattern = "{V:N2}";            
             (chartControl1.Diagram as XYDiagram).AxisX.Alignment = AxisAlignment.Zero;
         }
-
-        private void chartControl1_CustomDrawSeriesPoint(object sender, CustomDrawSeriesPointEventArgs e)
-        {
-            if (e.SeriesPoint.Values[0] == level)
-            {
-                (e.SeriesDrawOptions as LineDrawOptions).MarkerVisible = false;
-                e.LabelText = "";
-            }
-        }
-
-        private void chartControl1_BoundDataChanged(object sender, EventArgs e)
-        {
-            if (chartControl1.Series.Count > 1)
-                chartControl1.Series[1].View.Color = Color.Blue;
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            PopulateData();
+        public void ApplyColorizer() {
             level = Convert.ToDouble(textBox1.Text);
+            Series series = chartControl1.Series[0];
+            StepLineSeriesView view = new StepLineSeriesView();
+            series.View = view;
+            RangeSegmentColorizer colorizer = new RangeSegmentColorizer();
+            colorizer.RangeStops.AddRange(new double[] { minPointValue, level, maxPointValue });
+            colorizer.LegendItemPattern = "{V1:0.###} - {V2:0.###}";
+            view.SegmentColorizer = colorizer;
+        }
+
+        public void OnBoundDataChanged(object sender, EventArgs e) {
+            Series series = chartControl1.Series[0];
+            minPointValue = series.Points.Min(p => p.UserValues[0]);
+            maxPointValue = series.Points.Max(p => p.UserValues[0]);
+        }
+
+        private void button1_Click(object sender, EventArgs e) {
+            InitializeSeries();
+            ApplyColorizer();
         }
     }
 
-    class SeriesMaker
-    {
-        private DataTable data = new DataTable("MyDataTable");
-        private double level;
-
-        public SeriesMaker (double level)
-	    {
-            this.level = level;
-            Init();
-	    }
-              
-        public void Init()
-        {
+    class PointGenerator {
+        public static List<SimpleDataPoint> Generate() {
             Random rnd = new Random(DateTime.Now.Millisecond*2);
-
-            data.Columns.Add("S", typeof(string));
-            data.Columns.Add("X", typeof(Int32));
-            data.Columns.Add("Y", typeof(double));
-    
-            List<SeriesPoint> spc = new List<SeriesPoint>();
-
-            for (int i = 0; i < 10; i++)
-            {
+            List<SimpleDataPoint> list = new List<SimpleDataPoint>();
+            for(int i = 0; i < 10; i++) {
                 int x = i;
                 double y = (rnd.NextDouble() - 0.5) * 2;
-
-                spc.Add(new SeriesPoint(x, y));
+                list.Add(new SimpleDataPoint(x, y));
             }
-
-            bool bLastPointBelowZero = (spc[0].Values[0] < level);
-
-            for (int i = 0; i < spc.Count; i++)
-            {
-                //data.Rows.Add(new object[] { "ActualSeries", spc[i].Argument, spc[i].Values[0] });
-                //continue;
-
-                // Work with ActualSeries
-                if (spc[i].Values[0] >= level)
-                {
-                    if (bLastPointBelowZero && i > 0)
-                        data.Rows.Add(new object[] { "ActualSeries", spc[i].Argument, level });
-
-                    data.Rows.Add(new object[] { "ActualSeries", spc[i].Argument, spc[i].Values[0] });
-                }
-                else
-                {
-                    data.Rows.Add(new object[] { "ActualSeries", spc[i].Argument, level });
-                    data.Rows.Add(new object[] { "ActualSeries", spc[i].Argument, null });
-                }
-
-                // Work with SecondarySeries
-                if (spc[i].Values[0] >= level)
-                {
-                    data.Rows.Add(new object[] { "SecondarySeries", spc[i].Argument, level });
-                    data.Rows.Add(new object[] { "SecondarySeries", spc[i].Argument, null });
-                }
-                else
-                {
-                    if (!bLastPointBelowZero && i > 0)
-                        data.Rows.Add(new object[] { "SecondarySeries", spc[i].Argument, level });
-
-                    data.Rows.Add(new object[] { "SecondarySeries", spc[i].Argument, spc[i].Values[0] });
-                }
-
-                bLastPointBelowZero = (spc[i].Values[0] < level);
-            }
+            return list;
         }
-
-        public DataTable Data
-        {
-            get { return data; }
+    }
+    public class SimpleDataPoint {
+        public double X { get; private set; }
+        public double Y { get; private set; }
+        public SimpleDataPoint(double arg, double val) {
+            X = arg;
+            Y = val;
         }
-
     }
 }
