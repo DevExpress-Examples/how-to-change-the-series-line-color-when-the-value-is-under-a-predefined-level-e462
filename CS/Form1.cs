@@ -45,8 +45,14 @@ namespace ChartLineColor {
 
         public void OnBoundDataChanged(object sender, EventArgs e) {
             Series series = chartControl1.Series[0];
-            minPointValue = series.Points.Min(p => p.UserValues[0]);
-            maxPointValue = series.Points.Max(p => p.UserValues[0]);
+            minPointValue = maxPointValue = series.Points[0].Values[0];
+            for(int i = 1; i < series.Points.Count; i++) {
+                double value = series.Points[i].Values[0];
+                if(value < minPointValue)
+                    minPointValue = value;
+                if(value > maxPointValue)
+                    maxPointValue = value;
+            }
         }
 
         private void button1_Click(object sender, EventArgs e) {
