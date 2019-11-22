@@ -47,8 +47,19 @@ Namespace ChartLineColor
 
 		Public Sub OnBoundDataChanged(ByVal sender As Object, ByVal e As EventArgs)
 			Dim series As Series = chartControl1.Series(0)
-			minPointValue = series.Points.Min(Function(p) p.UserValues(0))
-			maxPointValue = series.Points.Max(Function(p) p.UserValues(0))
+'INSTANT VB WARNING: An assignment within expression was extracted from the following statement:
+'ORIGINAL LINE: minPointValue = maxPointValue = series.Points[0].Values[0];
+			maxPointValue = series.Points(0).Values(0)
+			minPointValue = maxPointValue
+			For i As Integer = 1 To series.Points.Count - 1
+				Dim value As Double = series.Points(i).Values(0)
+				If value < minPointValue Then
+					minPointValue = value
+				End If
+				If value > maxPointValue Then
+					maxPointValue = value
+				End If
+			Next i
 		End Sub
 
 		Private Sub button1_Click(ByVal sender As Object, ByVal e As EventArgs) Handles button1.Click
@@ -59,7 +70,7 @@ Namespace ChartLineColor
 
 	Friend Class PointGenerator
 		Public Shared Function Generate() As List(Of SimpleDataPoint)
-			Dim rnd As New Random(DateTime.Now.Millisecond*2)
+			Dim rnd As New Random(Date.Now.Millisecond*2)
 			Dim list As New List(Of SimpleDataPoint)()
 			For i As Integer = 0 To 9
 				Dim x As Integer = i
