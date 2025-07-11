@@ -4,11 +4,6 @@
 [![](https://img.shields.io/badge/📖_How_to_use_DevExpress_Examples-e9f6fc?style=flat-square)](https://docs.devexpress.com/GeneralInformation/403183)
 [![](https://img.shields.io/badge/💬_Leave_Feedback-feecdd?style=flat-square)](#does-this-example-address-your-development-requirementsobjectives)
 <!-- default badges end -->
-<!-- default file list -->
-*Files to look at*:
-
-* **[Form1.cs](./CS/Form1.cs) (VB: [Form1.vb](./VB/Form1.vb))**
-<!-- default file list end -->
 # Chart for WinForms - Change the Series Line Color When the Value is Under a Predefined Level
 
 This example creates a step line chart with the capability to change the series line color when the value is under a predefined level.
@@ -16,6 +11,10 @@ This example creates a step line chart with the capability to change the series 
 ![step-line-chart](images/step-line-chart.png)
 
 You can use the [RangeSegmentColorizer](https://docs.devexpress.com/CoreLibraries/DevExpress.XtraCharts.RangeSegmentColorizer) to color the line series view and its descendants. To do this, assign the `RangeSegmentColorizer` object to the [LineSeriesView.SegmentColorizer](https://docs.devexpress.com/CoreLibraries/DevExpress.XtraCharts.LineSeriesView.SegmentColorizer) property.
+
+## Files to Review
+
+* [Form1.cs](./CS/Form1.cs) (VB: [Form1.vb](./VB/Form1.vb))
 
 ## Documentation
 
